@@ -45,4 +45,5 @@ bazel test //...
 
 - [Dependency policy](docs/dependency-policy.md)
 - [Container toolchain](docs/container-toolchain.md)
+- [Handoff](docs/handoff.md)
 - [Porting workflow](docs/porting-workflow.md)
