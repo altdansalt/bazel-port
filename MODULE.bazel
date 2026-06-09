@@ -1,0 +1,45 @@
+module(name = "bazel_port", version = "0.1.0")
+
+bazel_dep(name = "rules_apko", version = "1.5.37")
+bazel_dep(name = "rules_oci", version = "2.3.0")
+bazel_dep(name = "rules_pkg", version = "1.2.0")
+bazel_dep(name = "rules_python", version = "2.0.2")
+
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_file(
+    name = "proot_x86_64",
+    downloaded_file_path = "proot",
+    executable = True,
+    sha256 = "3fb67d1e19aba66ff386382ae0a80dc0bf12f2353b33b710fb6f990a7700437a",
+    urls = [
+        "https://github.com/proot-me/proot-static-build/releases/download/v5.1.1/proot_5.1.1_x86_64_rc2--no-seccomp",
+    ],
+)
+
+http_archive(
+    name = "llama_cpp",
+    build_file_content = """
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+""",
+    sha256 = "18e792dfac388054a8e2a1d75995fd41379161c09fc481530bff5ee09ecf0135",
+    strip_prefix = "llama.cpp-49f354219059fc22316ae3efa54e54ba37f77860",
+    urls = [
+        "https://github.com/ggml-org/llama.cpp/archive/49f354219059fc22316ae3efa54e54ba37f77860.tar.gz",
+    ],
+)
+
+apko_toolchain = use_extension("@rules_apko//apko:extensions.bzl", "apko")
+apko_toolchain.toolchain(apko_version = "v1.1.12")
+apko_toolchain.translate_lock(
+    name = "cmake_image_lock",
+    lock = "//toolchains/container:cmake-image.apko.lock.json",
+)
+use_repo(apko_toolchain, "apko_toolchains")
+use_repo(apko_toolchain, "cmake_image_lock")
+register_toolchains("@apko_toolchains//:all")

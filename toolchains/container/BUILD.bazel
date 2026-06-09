@@ -1,0 +1,84 @@
+load("@rules_apko//apko:defs.bzl", "apko_image", "apko_lock")
+load("@rules_python//python:defs.bzl", "py_binary", "py_test")
+
+apko_image(
+    name = "cmake_image",
+    config = "cmake-image.apko.yaml",
+    contents = "@cmake_image_lock//:contents",
+    tag = "bazel-port-cmake:latest",
+    visibility = ["//visibility:public"],
+)
+
+apko_lock(
+    name = "cmake_image_lock",
+    config = "cmake-image.apko.yaml",
+    lockfile_name = "cmake-image.apko.lock.json",
+)
+
+py_test(
+    name = "cmake_image_test",
+    srcs = ["cmake_image_test.py"],
+    data = [":cmake_image"],
+)
+
+py_test(
+    name = "run_cmake_image_test",
+    srcs = [
+        "//bazel_port:__init__.py",
+        "//bazel_port:oci_layout_runner.py",
+        "run_cmake_image_test.py",
+    ],
+    data = [
+        ":cmake_image",
+        "@proot_x86_64//file:file",
+    ],
+)
+
+py_test(
+    name = "run_cmake_image_bwrap_test",
+    srcs = [
+        "//bazel_port:__init__.py",
+        "//bazel_port:oci_layout_runner.py",
+        "run_cmake_image_bwrap_test.py",
+    ],
+    data = [":cmake_image"],
+)
+
+py_binary(
+    name = "run_cmake_image",
+    srcs = [
+        "//bazel_port:__init__.py",
+        "//bazel_port:oci_layout_runner.py",
+    ],
+    args = [
+        "--image-layout",
+        "toolchains/container/cmake_image",
+        "--proot",
+        "file/proot",
+    ],
+    data = [
+        ":cmake_image",
+        "@proot_x86_64//file:file",
+    ],
+    main = "//bazel_port:oci_layout_runner.py",
+    visibility = ["//visibility:public"],
+)
+
+py_binary(
+    name = "run_cmake_image_no_network",
+    srcs = [
+        "//bazel_port:__init__.py",
+        "//bazel_port:oci_layout_runner.py",
+    ],
+    args = [
+        "--image-layout",
+        "toolchains/container/cmake_image",
+        "--runtime",
+        "bwrap",
+        "--network",
+        "none",
+    ],
+    data = [":cmake_image"],
+    main = "//bazel_port:oci_layout_runner.py",
+    visibility = ["//visibility:public"],
+)

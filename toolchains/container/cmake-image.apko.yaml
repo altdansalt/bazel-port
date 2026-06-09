@@ -1,0 +1,23 @@
+contents:
+  repositories:
+    - https://packages.wolfi.dev/os
+  keyring:
+    - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+  packages:
+    - bubblewrap
+    - ca-certificates-bundle
+    - busybox
+    - cmake
+    - gcc
+    - glibc
+    - make
+    - ninja
+    - posix-libc-utils
+
+entrypoint:
+  command: /usr/bin/cmake
+
+cmd: --version
+
+archs:
+  - x86_64

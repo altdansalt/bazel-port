@@ -1,0 +1,15 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
+py_binary(
+    name = "cmake_build",
+    srcs = [
+        "//bazel_port:__init__.py",
+        "//bazel_port:oci_layout_runner.py",
+        "cmake_build.py",
+    ],
+    data = [
+        "//toolchains/container:cmake_image",
+        "@llama_cpp//:all_srcs",
+    ],
+    main = "cmake_build.py",
+)
