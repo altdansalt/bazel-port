@@ -1,6 +1,4 @@
 exports_files([
     "__init__.py",
-    "oci_runner.py",
-    "oci_runner_test.py",
     "oci_layout_runner.py",
 ])

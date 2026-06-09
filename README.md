@@ -32,9 +32,6 @@ The current milestone is a Bazel-built OCI image, with no base image, that can
 run `cmake --version` through a Bazel-declared user-space rootfs runner. See
 [Container toolchain](docs/container-toolchain.md).
 
-`//:oci_runner` is retained only as an early diagnostic prototype. It shells out
-to a host OCI engine, so it is not part of the final workflow.
-
 ## Repository checks
 
 ```sh
