@@ -24,10 +24,16 @@ runs a CMake build with networking disabled:
 These are the canonical commands (single source of truth):
 
 ```sh
-bazel test //...                                           # repository checks
+bazel test //...                                            # repository checks
 bazel run //toolchains/container:run_cmake_image_no_network # cmake in no-network image
-bazel run //ports/llama_cpp:cmake_build                    # build upstream llama-cli
+bazel build //ports/llama_cpp:cmake_build                   # build upstream llama-cli; output at
+                                                            #   bazel-bin/ports/llama_cpp/build/
 ```
+
+`//ports/llama_cpp:cmake_build` is a `bazel build` target whose declared output
+is the CMake build tree. Bazel caches it keyed on its inputs (source archive,
+image, runner, command), so re-running is a no-op until an input changes — no
+more cold rebuilds.
 
 ## Known issues & caveats (repo-wide)
 
@@ -47,12 +53,25 @@ port can be fetched, built, tested, and optionally containerized with only
 `bazel build`/`test`/`run`. Near-term focus is hardening the CMake-in-image
 baseline and growing the llama.cpp port toward a native Bazel build.
 
+A concrete driver: be able to **compare the upstream CMake test suite against
+the eventual native Bazel tests**. That requires running `ctest` repeatedly
+without paying for a full CMake build each time — so the CMake build must be a
+cacheable artifact (a `bazel build` output), and the test target must consume
+that artifact rather than rebuild. The path being taken:
+
+1. Teach `oci_layout_runner.py` to `--export` a guest path after the command.
+2. Wrap the in-image CMake build in a `cmake_build` Bazel rule that declares the
+   build tree as an output (so `bazel build` caches it). ← implemented
+3. (next) Add `cmake_test` that binds the cached build tree back in at
+   `/work/build` and runs `ctest` — no reconfigure, no rebuild.
+
 ## Next steps
 
 - [ ] Switch `@llama_cpp` from a raw commit archive to a versioned upstream
       release tag, pinned by SHA-256.
-- [ ] Add `//ports/llama_cpp:cmake_test` for a curated no-network `ctest`
-      subset.
+- [ ] Add `//ports/llama_cpp:cmake_test` that consumes the cached `cmake_build`
+      tree (binds it at `/work/build`) and runs a curated no-network `ctest`
+      subset — no reconfigure/rebuild.
 - [ ] Decide whether HTTPS support stays disabled (OpenSSL is absent from the
       image) or add OpenSSL as a declared image dependency.
 - [ ] Declare any test models or assets as Bazel dependencies rather than

@@ -4,6 +4,28 @@ Append-only record of non-obvious decisions: *what* was decided and *why*.
 Newest entries go on top. Don't edit past entries — add a new one that
 supersedes them. [STATUS.md](STATUS.md) says where we are; this says why.
 
+## 2026-06-09 — CMake build is a `bazel build` output, not `bazel run`
+
+Converted `//ports/llama_cpp:cmake_build` from a `py_binary` (run via
+`bazel run`) into a `cmake_build` Starlark rule (`bazel_port/cmake.bzl`) whose
+declared output is the CMake build tree. Added an `--export GUEST:DEST` option
+to `oci_layout_runner.py` to copy the in-image build dir out to the declared
+output, and reintroduced an `oci_layout_runner` `py_binary` — this time at
+`//bazel_port:oci_layout_runner` (a better home than the old root target) and
+genuinely used, as the rule's exec tool. **Why:** `bazel run` is an ephemeral
+execution with no declared outputs, so every invocation was a cold rebuild and
+nothing downstream could reuse the result. Declaring the build tree as an output
+lets Bazel cache it (keyed on source/image/runner/command) and lets a future
+`cmake_test` consume it without rebuilding — the prerequisite for cheaply
+comparing CMake tests against native Bazel tests. The action runs with
+`no-sandbox`/`local` because `bubblewrap`'s namespaces can't nest inside Bazel's
+linux-sandbox; this matches the conditions `bazel run` already used.
+
+Considered `rules_foreign_cc` and rejected it for now: its `cmake()` rule wants
+a CMake toolchain on the exec host, which conflicts with the no-host-tools,
+build-inside-the-apko-image constraint. The custom runner already does that
+work; only output declaration was missing.
+
 ## 2026-06-09 — Removed the `oci_runner` prototype and orphaned root runner
 
 Deleted `//:oci_runner` (+ its test and sources) and the orphaned

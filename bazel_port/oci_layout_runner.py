@@ -109,6 +109,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="set an environment variable for the command; repeatable",
     )
     parser.add_argument("--workdir", default=None, help="working directory inside the rootfs")
+    parser.add_argument(
+        "--export",
+        action="append",
+        default=[],
+        metavar="GUEST_PATH:DEST_PATH",
+        help="after a successful command, copy a guest path under --workspace to a host "
+        "destination; repeatable",
+    )
     parser.add_argument("command", nargs=argparse.REMAINDER, help="command override")
     return parser.parse_args(argv)
 
@@ -156,7 +164,32 @@ def main(argv: list[str]) -> int:
         else:
             runtime_args = _bwrap_args(args, rootfs, workspace, binds, workdir)
 
-        return subprocess.run(runtime_args + command, env=env, check=False).returncode
+        result = subprocess.run(runtime_args + command, env=env, check=False)
+        if result.returncode == 0 and args.export:
+            _export_paths(args, workspace)
+        return result.returncode
+
+
+def _export_paths(args: argparse.Namespace, workspace: pathlib.Path | None) -> None:
+    if not (workspace and args.workspace):
+        raise SystemExit("--export requires --workspace")
+    for spec in args.export:
+        guest, separator, dest = spec.partition(":")
+        if not separator or not guest or not dest:
+            raise SystemExit(f"invalid --export value: {spec!r}")
+        relative = os.path.relpath(guest, args.workspace)
+        if relative == os.pardir or relative.startswith(os.pardir + os.sep):
+            raise SystemExit(f"--export path must be under --workspace: {guest!r}")
+        source = workspace if relative == os.curdir else workspace / relative
+        if not source.exists():
+            raise SystemExit(f"export source missing after command: {guest!r}")
+        destination = pathlib.Path(dest)
+        if source.is_dir():
+            destination.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(source, destination, dirs_exist_ok=True, symlinks=True)
+        else:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
 
 
 def _resolve_bind(value: str, option: str) -> tuple[pathlib.Path, str]:

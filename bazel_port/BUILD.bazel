@@ -1,4 +1,18 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
 exports_files([
     "__init__.py",
     "oci_layout_runner.py",
 ])
+
+# Generic CLI form of the runner, used as the exec tool for the cmake_build rule
+# (see cmake.bzl) and runnable directly for debugging.
+py_binary(
+    name = "oci_layout_runner",
+    srcs = [
+        "__init__.py",
+        "oci_layout_runner.py",
+    ],
+    main = "oci_layout_runner.py",
+    visibility = ["//visibility:public"],
+)

@@ -34,10 +34,13 @@ steps must be represented by Bazel targets rather than shell prerequisites.
 Current build target:
 
 ```sh
-bazel run //ports/llama_cpp:cmake_build
+bazel build //ports/llama_cpp:cmake_build
+# output: bazel-bin/ports/llama_cpp/build/  (the CMake build tree)
 ```
 
-This target:
+This is a `cmake_build` rule (see [bazel_port/cmake.bzl](../../bazel_port/cmake.bzl))
+whose declared output is the CMake build tree, so Bazel caches it and re-running
+is a no-op until an input changes. The target:
 
 - uses the pinned `@llama_cpp` source archive declared in `MODULE.bazel`
 - runs inside `//toolchains/container:cmake_image`
@@ -47,11 +50,17 @@ This target:
 - configures CMake out-of-source into `/work/build`
 - disables the embedded UI download path with `LLAMA_BUILD_UI=OFF`
 - builds the upstream `llama-cli` target
+- exports `/work/build` to the declared output directory
 
 The build uses `bubblewrap --unshare-net`, so it depends on the execution
-platform permitting unprivileged namespace operations. The `bubblewrap` binary is
-provided by the Bazel-built image; the kernel/VM capability is the remaining
-platform assumption.
+platform permitting unprivileged namespace operations, and the build action runs
+unsandboxed (`no-sandbox`/`local`) so bubblewrap's namespaces don't nest inside
+Bazel's sandbox. The `bubblewrap` binary is provided by the Bazel-built image;
+the kernel/VM capability is the remaining platform assumption.
+
+The build tree embeds absolute guest paths (`/src`, `/work/build`); a future
+`cmake_test` must re-mount the captured tree at the same `/work/build` so
+`ctest` runs without reconfiguring.
 
 An earlier exploratory run also completed the upstream default CMake build. The
 checked-in target is narrower so it is faster and avoids the upstream UI asset

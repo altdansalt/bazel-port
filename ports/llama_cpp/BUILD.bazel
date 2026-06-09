@@ -1,15 +1,14 @@
-load("@rules_python//python:defs.bzl", "py_binary")
+load("//bazel_port:cmake.bzl", "cmake_build")
 
-py_binary(
+cmake_build(
     name = "cmake_build",
-    srcs = [
-        "//bazel_port:__init__.py",
-        "//bazel_port:oci_layout_runner.py",
-        "cmake_build.py",
+    srcs = ["@llama_cpp//:all_srcs"],
+    build_targets = ["llama-cli"],
+    cache_entries = [
+        "LLAMA_BUILD_TESTS=ON",
+        "LLAMA_BUILD_UI=OFF",
+        "GGML_CCACHE=OFF",
     ],
-    data = [
-        "//toolchains/container:cmake_image",
-        "@llama_cpp//:all_srcs",
-    ],
-    main = "cmake_build.py",
+    image = "//toolchains/container:cmake_image",
+    jobs = 2,
 )
