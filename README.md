@@ -28,9 +28,9 @@ layers, or other tools, those inputs belong in Bazel dependency declarations.
 
 ## Current direction
 
-The current milestone is a Bazel-built OCI image, with no base image, that can
-run `cmake --version` through a Bazel-declared user-space rootfs runner. See
-[Container toolchain](docs/container-toolchain.md).
+For where the project is right now — what works, how to build/test/run, known
+issues, and next steps — see [Status](docs/STATUS.md). For *why* the project is
+in that state, see the [Decision log](docs/decisions.md).
 
 ## Repository checks
 
@@ -40,7 +40,14 @@ bazel test //...
 
 ## Documentation
 
+State (changes often):
+
+- [Status](docs/STATUS.md) — current capability, commands, known issues, roadmap
+- [Decision log](docs/decisions.md) — append-only record of why
+
+Reference (changes slowly):
+
 - [Dependency policy](docs/dependency-policy.md)
 - [Container toolchain](docs/container-toolchain.md)
-- [Handoff](docs/handoff.md)
 - [Porting workflow](docs/porting-workflow.md)
+- [llama.cpp port](ports/llama_cpp/README.md)

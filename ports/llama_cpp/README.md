@@ -56,3 +56,22 @@ platform assumption.
 An earlier exploratory run also completed the upstream default CMake build. The
 checked-in target is narrower so it is faster and avoids the upstream UI asset
 download path.
+
+## Current pin
+
+`@llama_cpp` is pinned to commit:
+
+```text
+49f354219059fc22316ae3efa54e54ba37f77860
+```
+
+## Known issues & caveats
+
+- The pin is a raw commit archive, not a release tag (should move to a `bNNNN`
+  tag pinned by SHA-256). See [decisions.md](../../docs/decisions.md).
+- Git is not installed in the image, so upstream build metadata reports an
+  unknown commit.
+- OpenSSL is not installed in the image, so HTTPS support is disabled.
+- `ctest` is not wired as a Bazel target yet (CMake is configured with
+  `-DLLAMA_BUILD_TESTS=ON`, but no Bazel `cmake_test` target exists).
+- This target builds `llama-cli` only, not the full upstream target graph.
