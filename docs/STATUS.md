@@ -43,6 +43,11 @@ more cold rebuilds.
   current exe.dev VM.
 - Neither `proot` nor `bubblewrap` is a complete OCI runtime (no cgroup
   semantics like `runc`/`crun`). They are lightweight smoke/build runners.
+- `//ports/llama_cpp:cmake_build` runs `{no-sandbox, local}`, so it is currently
+  **opted out of remote caching and remote execution**, and it does not build
+  under `linux-sandbox` (the runner bind-mounts execroot symlinks that dangle
+  inside bubblewrap's namespace). This is the open question in
+  [remote-execution.md](remote-execution.md).
 
 For port-specific caveats, see the port READMEs.
 
@@ -78,3 +83,8 @@ that artifact rather than rebuild. The path being taken:
       letting tests download them.
 - [ ] Consider native Bazel BUILD files for selected llama.cpp libraries or
       tools once the CMake baseline is stable.
+- [ ] **Decide the remote caching / RBE path** (open design question — see
+      [remote-execution.md](remote-execution.md)). This affects whether
+      `cmake_build` keeps bubblewrap or moves to image-as-execution-platform,
+      and whether `cmake_test` is a separate target or a combined
+      build+test action.

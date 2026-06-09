@@ -51,3 +51,8 @@ Reference (changes slowly):
 - [Container toolchain](docs/container-toolchain.md)
 - [Porting workflow](docs/porting-workflow.md)
 - [llama.cpp port](ports/llama_cpp/README.md)
+
+Design notes (open questions):
+
+- [Remote caching & RBE](docs/remote-execution.md) — paths for making the build
+  work with remote caching and remote execution
